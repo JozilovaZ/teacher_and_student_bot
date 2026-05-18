@@ -312,11 +312,15 @@ async def broadcast_send(message: types.Message, state: FSMContext):
 
         await asyncio.sleep(0.05)
 
-    await status_msg.edit_text(
+    result_text = (
         f"Broadcast yakunlandi!\n\n"
         f"✅ Yuborildi: {sent}\n"
         f"❌ Xato: {failed}"
     )
+    try:
+        await status_msg.edit_text(result_text)
+    except Exception:
+        await message.answer(result_text, reply_markup=admin_menu)
 
 
 @dp.message_handler(Text(equals="Yo`q"), state=BroadcastState.confirm)
