@@ -1,0 +1,16 @@
+﻿[Unit]
+Description=Ustoz Shogirt Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/ustoz_shogirt_bot
+ExecStart=/root/ustoz_shogirt_bot/venv/bin/python app.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

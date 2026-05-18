@@ -2,195 +2,151 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 
 from data.config import ADMINS
-from loader import dp,bot
+from keyboards.default.menu import confirm_state, menu_start
+from loader import dp, bot
 from states.anketa import SherikState
-from keyboards.default.menu import confirm_state,menu_start
+from utils.validators import (
+    validate_fullname, validate_texno, validate_aloqa, validate_hudud,
+    validate_narx, validate_kasb, validate_murojat, validate_maqsad
+)
+
 
 @dp.message_handler(text="Sherik kerak")
-async def sherik_hadler(message:types.Message):
-    text="""
-        Sherik topish uchun ariza berish
-        Hozir sizga birnecha savollar beriladi. 
-        Har biriga javob bering. 
-        Oxirida agar hammasi to`g`ri bo`lsa, HA tugmasini bosing va arizangiz Adminga yuboriladi.
-    """
-    await message.answer(text)
-    await message.answer("<b>Isn familiyangizni kiriting </b>")
+async def sherik_handler(message: types.Message):
+    await message.answer(
+        "Sherik topish uchun ariza berish\n\n"
+        "Hozir sizga bir necha savollar beriladi.\n"
+        "Har biriga javob bering.\n"
+        "Oxirida to'g'ri bo'lsa <b>Ha</b> tugmasini bosing."
+    )
+    await message.answer("Ism familiyangizni kiriting:")
     await SherikState.full_name.set()
 
 
 @dp.message_handler(state=SherikState.full_name)
-async def full_name(message:types.Message,state:FSMContext):
-    fullname=message.text
-    await state.update_data(
-        {
-            "fullname":fullname
-        }
-    )
+async def sherik_full_name(message: types.Message, state: FSMContext):
+    ok, err = validate_fullname(message.text)
+    if not ok:
+        return await message.answer(f"❌ {err}\n\nQaytadan kiriting:")
+    await state.update_data(fullname=message.text.strip())
     await SherikState.texno.set()
-    await message.answer("📚 Texnologiya:\n\n Talab qilinadigan texnologiyalarni kiriting?\n Texnologiya nomlarini vergul bilan ajrating. Masalan\nJava, C++, C#")
-
+    await message.answer(
+        "Qaysi texnologiyalarda sherik qidiryapsiz?\n"
+        "Vergul bilan ajrating. Masalan: Python, Django, SQL"
+    )
 
 
 @dp.message_handler(state=SherikState.texno)
-async def texnologiya(message:types.Message,state:FSMContext):
-    texnologiya=message.text
-    await state.update_data(
-        {
-            "texnologiya":texnologiya
-        }
-    )
+async def sherik_texno(message: types.Message, state: FSMContext):
+    ok, err = validate_texno(message.text)
+    if not ok:
+        return await message.answer(f"❌ {err}\n\nQaytadan kiriting:")
+    await state.update_data(texnologiya=message.text.strip())
     await SherikState.aloqa.set()
-    await message.answer("📞 Aloqa: \n\n  Bog`lanish uchun raqamingizni kiriting?\n Masalan, +998 90 123 45 67\n")
+    await message.answer("Aloqa uchun telefon raqamingiz:\nMasalan: +998 90 123 45 67")
+
 
 @dp.message_handler(state=SherikState.aloqa)
-async def aloqa(message:types.Message,state:FSMContext):
-    aloqa=message.text
-    await state.update_data(
-        {
-            "aloqa":aloqa
-        }
-    )
+async def sherik_aloqa(message: types.Message, state: FSMContext):
+    ok, err = validate_aloqa(message.text)
+    if not ok:
+        return await message.answer(f"❌ {err}\n\nQaytadan kiriting:")
+    await state.update_data(aloqa=message.text.strip())
     await SherikState.hudud.set()
-    await message.answer("🌐 Hudud:\n\n Qaysi hududdansiz?\n Viloyat nomi, Toshkent shahar yoki Respublikani kiriting.")
+    await message.answer("Qaysi hududdansiz?\nViloyat yoki shahar nomini kiriting.")
+
 
 @dp.message_handler(state=SherikState.hudud)
-async def hudud(message:types.Message,state:FSMContext):
-    hudud=message.text
-    await state.update_data(
-        {
-            "hudud":hudud
-        }
-    )
+async def sherik_hudud(message: types.Message, state: FSMContext):
+    ok, err = validate_hudud(message.text)
+    if not ok:
+        return await message.answer(f"❌ {err}\n\nQaytadan kiriting:")
+    await state.update_data(hudud=message.text.strip())
     await SherikState.narx.set()
-    await message.answer("💰 Narxi:\n\n Tolov qilasizmi yoki Tekinmi?\n Kerak bo`lsa, Summani kiriting?")
-
-
+    await message.answer("To'lov qilasizmi yoki tekinmi?\nKerak bo'lsa summani kiriting.")
 
 
 @dp.message_handler(state=SherikState.narx)
-async def narx(message:types.Message,state:FSMContext):
-    narx=message.text
-    await state.update_data(
-        {
-            "narx":narx
-        }
-    )
+async def sherik_narx(message: types.Message, state: FSMContext):
+    ok, err = validate_narx(message.text)
+    if not ok:
+        return await message.answer(f"❌ {err}\n\nQaytadan kiriting:")
+    await state.update_data(narx=message.text.strip())
     await SherikState.kasb.set()
-    await message.answer("👨🏻‍💻 Kasbi:\n\n Ishlaysizmi yoki o`qiysizmi?\n Masalan, Talaba")
-
+    await message.answer("Kasbingiz nima?\nMasalan: Talaba, Dasturchi")
 
 
 @dp.message_handler(state=SherikState.kasb)
-async def kasb(message:types.Message,state:FSMContext):
-    kasb=message.text
-    await state.update_data(
-        {
-            "kasb":kasb
-        }
-    )
+async def sherik_kasb(message: types.Message, state: FSMContext):
+    ok, err = validate_kasb(message.text)
+    if not ok:
+        return await message.answer(f"❌ {err}\n\nQaytadan kiriting:")
+    await state.update_data(kasb=message.text.strip())
     await SherikState.murojat.set()
-    await message.answer("🕰 Murojaat qilish vaqti:\n\n Qaysi vaqtda murojaat qilish mumkin?\n Masalan, 9:00 - 18:0")
-
-
+    await message.answer("Qaysi vaqtda murojaat qilish mumkin?\nMasalan: 9:00 - 18:00")
 
 
 @dp.message_handler(state=SherikState.murojat)
-async def murajat(message:types.Message,state:FSMContext):
-    murajat=message.text
-    await state.update_data(
-        {
-            "murajat":murajat
-        }
-    )
+async def sherik_murojat(message: types.Message, state: FSMContext):
+    ok, err = validate_murojat(message.text)
+    if not ok:
+        return await message.answer(f"❌ {err}\n\nQaytadan kiriting:")
+    await state.update_data(murojat=message.text.strip())
     await SherikState.maqsad.set()
-    await message.answer("🔎 Maqsad:\n\n Maqsadingizni qisqacha yozib bering.")
+    await message.answer("Maqsadingizni qisqacha yozib bering:")
 
 
 @dp.message_handler(state=SherikState.maqsad)
-async def maqsad(message:types.Message,state:FSMContext):
-    maqsad=message.text
-    await state.update_data(
-        {
-            "maqsad":maqsad
-        }
-    )
-    # Ma'lumotlarni o'qiymiz
+async def sherik_maqsad(message: types.Message, state: FSMContext):
+    ok, err = validate_maqsad(message.text)
+    if not ok:
+        return await message.answer(f"❌ {err}\n\nQaytadan kiriting:")
+    await state.update_data(maqsad=message.text.strip())
+
     data = await state.get_data()
-    fullname = data.get('fullname')
-    texnologiya = data.get('texnologiya')
-    aloqa = data.get('aloqa')
-    hudud = data.get('hudud')
-    narx = data.get('narx')
-    kasb = data.get('kasb')
-    murajat = data.get('murajat')
-    maqsad = data.get('maqsad')
-
-    # xabar chiqaramiz
-    text = f"<b>Sherik kerak:</b> \n\n"
-    text += f"🏅 Sherik:{fullname}\n"
-    text += f"📚 Texnologiya:{texnologiya}\n"
-    text += f"🇺🇿 Telegram:{aloqa}\n"
-    text += f"📞 Aloqa:{aloqa}\n"
-    text += f"🌐 Hudud:{hudud}\n"
-    text += f"💰 Narxi:{narx}\n"
-    text += f"🏻‍💻 Kasbi:{kasb}\n"
-    text += f"🕰 Murojaat qilish vaqti:{murajat}\n"
-    text += f"🔎 Maqsad:{maqsad}\n"
-
+    text = (
+        "<b>Sherik kerak — ariza:</b>\n\n"
+        f"🏅 Ism familiya: {data['fullname']}\n"
+        f"📚 Texnologiya: {data['texnologiya']}\n"
+        f"📞 Aloqa: {data['aloqa']}\n"
+        f"🌐 Hudud: {data['hudud']}\n"
+        f"💰 Narx: {data['narx']}\n"
+        f"👨‍💻 Kasb: {data['kasb']}\n"
+        f"🕰 Murojaat vaqti: {data['murojat']}\n"
+        f"🔎 Maqsad: {data['maqsad']}\n"
+    )
     await message.answer(text)
     await message.answer("Barcha ma'lumotlar to'g'rimi?", reply_markup=confirm_state)
     await SherikState.confirm.set()
 
 
-
-
 @dp.message_handler(state=SherikState.confirm)
-async def confirm(message:types.Message,state:FSMContext):
-    javob=message.text.lower()
+async def sherik_confirm(message: types.Message, state: FSMContext):
+    javob = message.text.lower()
 
-    if javob=="ha":
-        data=await state.get_data()
-
-        fullname = data.get('fullname')
-        texnologiya = data.get('texnologiya')
-        aloqa = data.get('aloqa')
-        hudud = data.get('hudud')
-        narx = data.get('narx')
-        kasb = data.get('kasb')
-        murajat = data.get('murajat')
-        maqsad = data.get('maqsad')
-
-
-        # xabar chiqaramiz
-        text = f"<b>Sherik kerak:</b> \n\n"
-        text += f"🏅 Sherik:{fullname}\n"
-        text += f"📚 Texnologiya:{texnologiya}\n"
-        text += f"🇺🇿 Telegram:{aloqa}\n"
-        text += f"📞 Aloqa:{aloqa}\n"
-        text += f"🌐 Hudud:{hudud}\n"
-        text += f"💰 Narxi:{narx}\n"
-        text += f"🏻‍💻 Kasbi:{kasb}\n"
-        text += f"🕰 Murojaat qilish vaqti:{murajat}\n"
-        text += f"🔎 Maqsad:{maqsad}\n"
-
-        await bot.send_message(ADMINS[0],text)
-        await message.answer("Adminga yuborildi")
+    if javob == "ha":
+        data = await state.get_data()
+        text = (
+            "<b>Sherik kerak — yangi ariza:</b>\n\n"
+            f"🏅 Ism familiya: {data['fullname']}\n"
+            f"📚 Texnologiya: {data['texnologiya']}\n"
+            f"📞 Aloqa: {data['aloqa']}\n"
+            f"🌐 Hudud: {data['hudud']}\n"
+            f"💰 Narx: {data['narx']}\n"
+            f"👨‍💻 Kasb: {data['kasb']}\n"
+            f"🕰 Murojaat vaqti: {data['murojat']}\n"
+            f"🔎 Maqsad: {data['maqsad']}\n"
+        )
+        for admin_id in ADMINS:
+            try:
+                await bot.send_message(admin_id, text)
+            except Exception:
+                pass
         await state.finish()
+        await message.answer("Arizangiz adminga yuborildi!", reply_markup=menu_start)
 
-    elif javob=="yo`q":
-        await message.answer("Qabul qilinmadi")
+    elif javob == "yo`q":
         await state.finish()
+        await message.answer("Ariza bekor qilindi.", reply_markup=menu_start)
     else:
-        await message.answer("Ha yoki Yo`q deb javob bering")
-
-
-
-
-
-
-
-
-
-
-
+        await message.answer("Iltimos, Ha yoki Yo`q deb javob bering.")

@@ -1,197 +1,164 @@
-
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from keyboards.default.menu import  confirm_state
+
 from data.config import ADMINS
-from loader import dp,bot
+from keyboards.default.menu import confirm_state, menu_start
+from loader import dp, bot
 from states.anketa import hodimkkState
+from utils.validators import (
+    validate_fullname, validate_texno, validate_aloqa, validate_hudud,
+    validate_idora, validate_murojat, validate_vaqt, validate_maosh, validate_maqsad
+)
 
 
 @dp.message_handler(text="Hodim kerak")
-async def Ish_joyi_hadler(message:types.Message):
-    text="""
-        Xodim topish uchun ariza berish
-        Hozir sizga birnecha savollar beriladi. 
-        Har biriga javob bering. 
-        Oxirida agar hammasi to`g`ri bo`lsa, HA tugmasini bosing va arizangiz Adminga yuboriladi.     
-    """
-    await message.answer(text)
-    await message.answer("🎓 Idora nomi?")
+async def hodim_handler(message: types.Message):
+    await message.answer(
+        "Hodim topish uchun ariza berish\n\n"
+        "Hozir sizga bir necha savollar beriladi.\n"
+        "Har biriga javob bering.\n"
+        "Oxirida to'g'ri bo'lsa <b>Ha</b> tugmasini bosing."
+    )
+    await message.answer("Idora (kompaniya) nomini kiriting:")
     await hodimkkState.idora.set()
 
+
 @dp.message_handler(state=hodimkkState.idora)
-async def idora(message:types.Message,state:FSMContext):
-    idora=message.text
-    await state.update_data(
-        {
-            "idora": idora
-        }
-    )
+async def hodim_idora(message: types.Message, state: FSMContext):
+    ok, err = validate_idora(message.text)
+    if not ok:
+        return await message.answer(f"❌ {err}\n\nQaytadan kiriting:")
+    await state.update_data(idora=message.text.strip())
     await hodimkkState.texno.set()
-    await message.answer("📚 Texnologiya:\n\n Talab qilinadigan texnologiyalarni kiriting?\n Masalan,Java, C++, C#")
+    await message.answer(
+        "Talab qilinadigan texnologiyalarni kiriting.\n"
+        "Vergul bilan ajrating. Masalan: Python, Django, SQL"
+    )
 
 
 @dp.message_handler(state=hodimkkState.texno)
-async def texno(message:types.Message,state:FSMContext):
-    texno=message.text
-    await state.update_data(
-        {
-            "texno": texno
-        }
-    )
+async def hodim_texno(message: types.Message, state: FSMContext):
+    ok, err = validate_texno(message.text)
+    if not ok:
+        return await message.answer(f"❌ {err}\n\nQaytadan kiriting:")
+    await state.update_data(texno=message.text.strip())
     await hodimkkState.aloqa.set()
-    await message.answer("📞 Aloqa: \n\n Bog`lanish uchun raqamingizni kiriting?\n Masalan, +998 90 123 45 67 ")
+    await message.answer("Bog'lanish uchun telefon raqam:\nMasalan: +998 90 123 45 67")
+
 
 @dp.message_handler(state=hodimkkState.aloqa)
-async def aloqa(message:types.Message,state:FSMContext):
-    aloqa=message.text
-    await state.update_data(
-        {
-            "aloqa": aloqa
-        }
-    )
+async def hodim_aloqa(message: types.Message, state: FSMContext):
+    ok, err = validate_aloqa(message.text)
+    if not ok:
+        return await message.answer(f"❌ {err}\n\nQaytadan kiriting:")
+    await state.update_data(aloqa=message.text.strip())
     await hodimkkState.hudud.set()
-    await message.answer("🌐 Hudud: \n\nQaysi hududdansiz?\n Viloyat nomi, Toshkent shahar yoki Respublikani kiriting")
+    await message.answer("Idora qaysi hududda joylashgan?\nViloyat yoki shahar nomini kiriting.")
 
 
 @dp.message_handler(state=hodimkkState.hudud)
-async def hudud(message:types.Message,state:FSMContext):
-    hudud=message.text
-    await state.update_data(
-        {
-            "hudud": hudud
-        }
-    )
+async def hodim_hudud(message: types.Message, state: FSMContext):
+    ok, err = validate_hudud(message.text)
+    if not ok:
+        return await message.answer(f"❌ {err}\n\nQaytadan kiriting:")
+    await state.update_data(hudud=message.text.strip())
     await hodimkkState.full_name.set()
-    await message.answer("✍️Mas'ul ism sharifi?")
+    await message.answer("Mas'ul shaxsning ism sharifi:")
 
 
 @dp.message_handler(state=hodimkkState.full_name)
-async def full_name(message:types.Message,state:FSMContext):
-    fullname=message.text
-    await state.update_data(
-        {
-            "fullname":fullname
-        }
-    )
+async def hodim_full_name(message: types.Message, state: FSMContext):
+    ok, err = validate_fullname(message.text)
+    if not ok:
+        return await message.answer(f"❌ {err}\n\nQaytadan kiriting:")
+    await state.update_data(fullname=message.text.strip())
     await hodimkkState.murojat.set()
-    await message.answer("🕰 Murojaat qilish vaqti: \n\n Qaysi vaqtda murojaat qilish mumkin?\nMasalan, 9:00 - 18:00")
+    await message.answer("Murojaat qilish vaqti:\nMasalan: 9:00 - 18:00")
+
 
 @dp.message_handler(state=hodimkkState.murojat)
-async def murojat(message: types.Message, state: FSMContext):
-    murojat = message.text
-    await state.update_data(
-        {
-            "murojat": murojat
-        }
-    )
+async def hodim_murojat(message: types.Message, state: FSMContext):
+    ok, err = validate_murojat(message.text)
+    if not ok:
+        return await message.answer(f"❌ {err}\n\nQaytadan kiriting:")
+    await state.update_data(murojat=message.text.strip())
     await hodimkkState.ish_vaqti.set()
-    await message.answer("🕰 Ish vaqtini kiriting")
+    await message.answer("Ish vaqtini kiriting:\nMasalan: 9:00 - 18:00, Dushanba-Juma")
+
 
 @dp.message_handler(state=hodimkkState.ish_vaqti)
-async def ish_vaqti(message: types.Message, state: FSMContext):
-    ish_vaqti = message.text
-    await state.update_data(
-        {
-              "ish_vaqti": ish_vaqti
-        }
-    )
+async def hodim_ish_vaqti(message: types.Message, state: FSMContext):
+    ok, err = validate_vaqt(message.text)
+    if not ok:
+        return await message.answer(f"❌ {err}\n\nQaytadan kiriting:")
+    await state.update_data(ish_vaqti=message.text.strip())
     await hodimkkState.maosh.set()
-    await message.answer("💰 Maoshni kiriting?")
+    await message.answer("Taklif etilayotgan maosh:\nMasalan: 3 000 000 so'm / oy")
 
 
 @dp.message_handler(state=hodimkkState.maosh)
-async def maosh(message: types.Message, state: FSMContext):
-    maosh = message.text
-    await state.update_data(
-        {
-              "maosh": maosh
-        }
-    )
+async def hodim_maosh(message: types.Message, state: FSMContext):
+    ok, err = validate_maosh(message.text)
+    if not ok:
+        return await message.answer(f"❌ {err}\n\nQaytadan kiriting:")
+    await state.update_data(maosh=message.text.strip())
     await hodimkkState.qoshimcha_malumot.set()
-    await message.answer("‼️ Qo`shimcha ma`lumotlar?")
+    await message.answer("Qo'shimcha ma'lumotlar (ixtiyoriy):\nYo'q bo'lsa — \"Yo'q\" deb yozing.")
 
 
 @dp.message_handler(state=hodimkkState.qoshimcha_malumot)
-async def qoshimcha_malumot(message: types.Message, state: FSMContext):
-    qoshimcha_malumot = message.text
-    await state.update_data(
-        {
-              "qoshimcha_malumot": qoshimcha_malumot
-        }
-    )
+async def hodim_qoshimcha(message: types.Message, state: FSMContext):
+    text = message.text.strip()
+    if len(text) < 1:
+        return await message.answer("❌ Kamida biror narsa yozing yoki \"Yo'q\" deb yozing.")
+    await state.update_data(qoshimcha_malumot=text)
 
-    # Ma'lumotlarni o'qiymiz
     data = await state.get_data()
-    idora = data.get('idora')
-    texno = data.get('texno')
-    aloqa = data.get('aloqa')
-    hudud = data.get('hudud')
-    fullname=data.get('fullname')
-    murojat = data.get('murojat')
-    ish_vaqti=data.get('ish_vaqti')
-    maosh=data.get('maosh')
-    qoshimcha_malumot = data.get('qoshimcha_malumot')
-
-
-    # xabar chiqaramiz
-    text = f"<b>Hodim kirak:</b> \n\n"
-    text += f"🏢 Idora:{idora}\n"
-    text += f"📚 Texnologiya{texno}"
-    text += f"Telegram:{aloqa}\n"
-    text += f"📞 Aloqa:{aloqa}\n"
-    text += f"🌐 Hudud:{hudud}\n"
-    text+=f"✍️ Mas'ul:{fullname}\n"
-    text += f"🕰 Murojaat vaqti:{murojat}\n"
-    text+=f"🕰 Ish vaqti:{ish_vaqti}\n"
-    text+=f"💰 Maosh:{maosh}\n"
-    text += f"‼️ Qo`shimcha:{qoshimcha_malumot}\n"
-
-
+    text = (
+        "<b>Hodim kerak — ariza:</b>\n\n"
+        f"🏢 Idora: {data['idora']}\n"
+        f"📚 Texnologiya: {data['texno']}\n"
+        f"📞 Aloqa: {data['aloqa']}\n"
+        f"🌐 Hudud: {data['hudud']}\n"
+        f"✍️ Mas'ul: {data['fullname']}\n"
+        f"🕰 Murojaat vaqti: {data['murojat']}\n"
+        f"🕰 Ish vaqti: {data['ish_vaqti']}\n"
+        f"💰 Maosh: {data['maosh']}\n"
+        f"‼️ Qo'shimcha: {data['qoshimcha_malumot']}\n"
+    )
     await message.answer(text)
     await message.answer("Barcha ma'lumotlar to'g'rimi?", reply_markup=confirm_state)
     await hodimkkState.confirm.set()
 
 
 @dp.message_handler(state=hodimkkState.confirm)
-async def confirm(message: types.Message, state: FSMContext):
+async def hodim_confirm(message: types.Message, state: FSMContext):
     javob = message.text.lower()
 
     if javob == "ha":
         data = await state.get_data()
-        idora = data.get('idora')
-        texno = data.get('texno')
-        aloqa = data.get('aloqa')
-        hudud = data.get('hudud')
-        fullname = data.get('fullname')
-        murojat = data.get('murojat')
-        ish_vaqti = data.get('ish_vaqti')
-        maosh = data.get('maosh')
-        qoshimcha_malumot = data.get('qoshimcha_malumot')
-
-        # xabar chiqaramiz
-        text = f"<b>Hodim kirak:</b> \n\n"
-        text += f"🏢 Idora:{idora}\n"
-        text += f"📚 Texnologiya{texno}"
-        text += f"Telegram:{aloqa}\n"
-        text += f"📞 Aloqa:{aloqa}\n"
-        text += f"🌐 Hudud:{hudud}\n"
-        text += f"✍️ Mas'ul:{fullname}\n"
-        text += f"🕰 Murojaat vaqti:{murojat}\n"
-        text += f"🕰 Ish vaqti:{ish_vaqti}\n"
-        text += f"💰 Maosh:{maosh}\n"
-        text += f"‼️ Qo`shimcha:{qoshimcha_malumot}\n"
-
-        await bot.send_message(ADMINS[0], text)
-        await message.answer("Adminga yuborildi")
+        text = (
+            "<b>Hodim kerak — yangi ariza:</b>\n\n"
+            f"🏢 Idora: {data['idora']}\n"
+            f"📚 Texnologiya: {data['texno']}\n"
+            f"📞 Aloqa: {data['aloqa']}\n"
+            f"🌐 Hudud: {data['hudud']}\n"
+            f"✍️ Mas'ul: {data['fullname']}\n"
+            f"🕰 Murojaat vaqti: {data['murojat']}\n"
+            f"🕰 Ish vaqti: {data['ish_vaqti']}\n"
+            f"💰 Maosh: {data['maosh']}\n"
+            f"‼️ Qo'shimcha: {data['qoshimcha_malumot']}\n"
+        )
+        for admin_id in ADMINS:
+            try:
+                await bot.send_message(admin_id, text)
+            except Exception:
+                pass
         await state.finish()
+        await message.answer("Arizangiz adminga yuborildi!", reply_markup=menu_start)
 
     elif javob == "yo`q":
-        await message.answer("Qabul qilinmadi")
         await state.finish()
+        await message.answer("Ariza bekor qilindi.", reply_markup=menu_start)
     else:
-        await message.answer("Ha yoki Yo`q deb javob bering")
-
-
-
-
+        await message.answer("Iltimos, Ha yoki Yo`q deb javob bering.")
