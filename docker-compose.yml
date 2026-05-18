@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  bot:
+    build: .
+    container_name: ustoz_shogirt_bot
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./utils/db_api:/app/utils/db_api
