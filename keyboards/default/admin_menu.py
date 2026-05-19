@@ -6,7 +6,7 @@ from aiogram.types import (
 admin_menu = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="Statistika"), KeyboardButton(text="Foydalanuvchilar")],
-        [KeyboardButton(text="Darslar (admin)"), KeyboardButton(text="Broadcast")],
+        [KeyboardButton(text="Arizalar (admin)"), KeyboardButton(text="Broadcast")],
     ],
     resize_keyboard=True
 )

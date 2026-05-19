@@ -1,84 +1,118 @@
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-# Rol tanlash klaviaturasi
-role_keyboard = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text="Ustoz"), KeyboardButton(text="Shogird")],
-    ],
-    resize_keyboard=True,
-    one_time_keyboard=True
-)
+PAGE_SIZE = 5
 
-# Ustoz panel asosiy menyu
-ustoz_menu = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text="Dars qo'shish"), KeyboardButton(text="Mening darslarim")],
-        [KeyboardButton(text="Topshiriq berish"), KeyboardButton(text="Javoblarni ko'rish")],
-        [KeyboardButton(text="Shogirdlarim"), KeyboardButton(text="Darsni o'chirish")],
-    ],
-    resize_keyboard=True
-)
-
-# Shogird panel asosiy menyu
-shogird_menu = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text="Darslar"), KeyboardButton(text="Topshiriqlar")],
-        [KeyboardButton(text="Baholarim")],
-    ],
-    resize_keyboard=True
-)
-
-# Fayl o'tkazib yuborish tugmasi
-skip_keyboard = ReplyKeyboardMarkup(
-    keyboard=[[KeyboardButton(text="O'tkazib yuborish")]],
-    resize_keyboard=True,
-    one_time_keyboard=True
-)
-
-# Muddat o'tkazib yuborish
-skip_deadline_keyboard = ReplyKeyboardMarkup(
-    keyboard=[[KeyboardButton(text="Muddat yo'q")]],
-    resize_keyboard=True,
-    one_time_keyboard=True
-)
+CATEGORY_LABELS = {
+    'ustoz':    '🔍 Ustoz kerak',
+    'shogird':  '🎓 Shogird kerak',
+    'hodim':    '👔 Hodim kerak',
+    'ish_joyi': '💼 Ish joyi kerak',
+    'sherik':   '🤝 Sherik kerak',
+}
 
 
-def lessons_inline(lessons, prefix="lesson") -> InlineKeyboardMarkup:
+def ads_list_kb(ads, category: str, offset: int, total: int,
+                hudud: str = '', texno: str = '') -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup(row_width=1)
-    for lesson in lessons:
+    for ad in ads:
+        active_mark = '' if ad['is_active'] else ' [nofaol]'
         kb.add(InlineKeyboardButton(
-            text=f"📚 {lesson['title']}",
-            callback_data=f"{prefix}_{lesson['id']}"
+            text=f"👤 {ad['fullname']} | 📍 {ad['hudud']}{active_mark}",
+            callback_data=f"ad_{ad['id']}"
+        ))
+
+    nav = []
+    if offset > 0:
+        nav.append(InlineKeyboardButton(
+            text="⬅️ Oldingi",
+            callback_data=f"browse_{category}_{offset - PAGE_SIZE}_{hudud}_{texno}"
+        ))
+    if offset + PAGE_SIZE < total:
+        nav.append(InlineKeyboardButton(
+            text="Keyingi ➡️",
+            callback_data=f"browse_{category}_{offset + PAGE_SIZE}_{hudud}_{texno}"
+        ))
+    if nav:
+        kb.row(*nav)
+
+    kb.add(InlineKeyboardButton(
+        text="🔎 Filtr",
+        callback_data=f"filter_{category}"
+    ))
+    return kb
+
+
+def ad_detail_kb(ad_id: int, contact_info: str) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(row_width=1)
+    kb.add(InlineKeyboardButton(
+        text=f"📞 Bog'lanish: {contact_info}",
+        callback_data=f"contact_{ad_id}"
+    ))
+    kb.add(InlineKeyboardButton(
+        text="⬅️ Orqaga",
+        callback_data=f"back_ad_{ad_id}"
+    ))
+    return kb
+
+
+def contact_kb(contact_info: str, username: str = None) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup()
+    if username:
+        kb.add(InlineKeyboardButton(
+            text=f"💬 Telegram: @{username}",
+            url=f"https://t.me/{username}"
+        ))
+    kb.add(InlineKeyboardButton(
+        text=f"📞 {contact_info}",
+        callback_data="noop"
+    ))
+    return kb
+
+
+def my_ads_kb(ads) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(row_width=1)
+    for ad in ads:
+        cat_label = CATEGORY_LABELS.get(ad['category'], ad['category'])
+        status = '✅' if ad['is_active'] else '⏸'
+        kb.add(InlineKeyboardButton(
+            text=f"{status} {cat_label} | {ad['fullname']}",
+            callback_data=f"myad_{ad['id']}"
         ))
     return kb
 
 
-def assignments_inline(assignments, prefix="assign") -> InlineKeyboardMarkup:
+def my_ad_manage_kb(ad_id: int, is_active: int) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(row_width=2)
+    if is_active:
+        kb.add(InlineKeyboardButton(text="⏸ To'xtatish", callback_data=f"myad_off_{ad_id}"))
+    else:
+        kb.add(InlineKeyboardButton(text="▶️ Faollashtirish", callback_data=f"myad_on_{ad_id}"))
+    kb.add(InlineKeyboardButton(text="🗑 O'chirish", callback_data=f"myad_del_{ad_id}"))
+    kb.add(InlineKeyboardButton(text="⬅️ Orqaga", callback_data="myad_back"))
+    return kb
+
+
+def category_select_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup(row_width=1)
-    for a in assignments:
+    for key, label in CATEGORY_LABELS.items():
+        kb.add(InlineKeyboardButton(text=label, callback_data=f"newad_{key}"))
+    return kb
+
+
+def admin_users_kb(users) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(row_width=1)
+    for u in users[:30]:
         kb.add(InlineKeyboardButton(
-            text=f"📝 {a['title']}",
-            callback_data=f"{prefix}_{a['id']}"
+            text=f"{'🚫' if u['role']=='blocked' else '👤'} {u['full_name']}",
+            callback_data=f"auser_{u['telegram_id']}"
         ))
     return kb
 
 
-def lessons_delete_inline(lessons) -> InlineKeyboardMarkup:
-    kb = InlineKeyboardMarkup(row_width=1)
-    for lesson in lessons:
-        kb.add(InlineKeyboardButton(
-            text=f"🗑 {lesson['title']}",
-            callback_data=f"dellesson_{lesson['id']}"
-        ))
-    return kb
-
-
-def submissions_inline(submissions) -> InlineKeyboardMarkup:
-    kb = InlineKeyboardMarkup(row_width=1)
-    for s in submissions:
-        grade_text = f"✅ {s['grade']}/100" if s['grade'] is not None else "⏳ Baholanmagan"
-        kb.add(InlineKeyboardButton(
-            text=f"{s['student_name']} — {grade_text}",
-            callback_data=f"sub_{s['id']}"
-        ))
+def admin_user_action_kb(telegram_id: int, role: str) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(row_width=2)
+    if role == 'blocked':
+        kb.add(InlineKeyboardButton(text="✅ Blokdan chiqar", callback_data=f"aunblock_{telegram_id}"))
+    else:
+        kb.add(InlineKeyboardButton(text="🚫 Bloklash", callback_data=f"ablock_{telegram_id}"))
     return kb
